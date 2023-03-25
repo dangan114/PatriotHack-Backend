@@ -12,6 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 app.use(cors())
+
 app.use(express.json())
 
 app.get('/', (req, res) => {
@@ -21,12 +22,35 @@ app.get('/', (req, res) => {
 app.get('/user/:phone', async (req, res) => {
     const { phone } = req.params;
     let collection = db.collection('users')
-    let results = await collection.findOne({ phone: phone });
-    res.send(results).status(200)
+    let results = null;
+
+    try {
+        results = await collection.findOne({ phone: phone });
+    } catch (e) {
+        res.send({
+            status: 0,
+            message: 'error with the server',
+        }).status(502)
+    }
+    
+    if (results) {
+        res.send({
+            status: 0,
+            message: 'Result Found!',
+            payload: results
+        }).status(200)
+    }
+    else {
+        res.send({
+            status: 0,
+            message: 'Result not Found!',
+        }).status(200)
+    }
+    
 })
 
 app.post('/setup', async (req, res) => {
-    const { current, max, phone } = req.body;
+    const { current, max, phone, creditUsed, cycleStartDate } = req.body;
     let collection = db.collection("users");
     let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
  
@@ -35,6 +59,8 @@ app.post('/setup', async (req, res) => {
             phone,
             current,
             max,
+            creditUsed,
+            cycleStartDate,
             paymentList: []
         }
         newDocument.createdAt = new Date();
