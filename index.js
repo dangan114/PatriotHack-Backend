@@ -20,13 +20,13 @@ app.get('/', (req, res) => {
 
 app.get('/user/:phone', async (req, res) => {
     const { phone } = req.params;
-    let collection = await db.collection('users')
+    let collection = db.collection('users')
     let results = await collection.findOne({ phone: phone });
     res.send(results).status(200)
 })
 
 app.post('/setup', async (req, res) => {
-    const { current, phone } = req.body;
+    const { current, max, phone } = req.body;
     let collection = db.collection("users");
     let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
  
@@ -34,19 +34,22 @@ app.post('/setup', async (req, res) => {
         let newDocument = {
             phone,
             current,
+            max,
             paymentList: []
         }
         newDocument.createdAt = new Date();
         let result = await collection.insertOne(newDocument);
         res.send({
+            status: 0,
             message: 'Phone Number Registered Successfully',
             result: result
         }).status(200);
     }
     else {
         res.send({
+            status: 1,
             message: 'Phone number already exists'
-        }).status(301)
+        }).status(200)
     }
 })
 
