@@ -51,34 +51,95 @@ app.get('/user/:phone', async (req, res) => {
     
 })
 
-app.post('/setup', async (req, res) => {
+// app.get('/test', (req, res) => {
+//     const { phone } = req.body
+//     const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
+
+//     // client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
+//     //             .verifications
+//     //             .create({to: '+1' + phone, channel: 'sms'})
+//     //             .then(verification => console.log(verification.status));
+
+//     // client.verify.v2.services
+//     //             .create({friendlyName: 'My First Verify Service'})
+//     //             .then(service => console.log(service.sid));
+// })
+
+app.post('/login', async (req, res) => {
+    const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
+    const { phone } = req.body;
+
+    client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
+    .verifications
+    .create({to: '+1' + phone, channel: 'sms'})
+    .then(verification => res.send(verification.status).status(200));
+})
+
+app.post('/verify', async (req, res) => {
+    const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
+    const collection = db.collection("users");
+    const data = collection.find({ phone: phone })
+    const { phone, code } = req.body
+
+    client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
+    .verificationChecks
+    .create({to: '+1' + phone, code: code })
+    .then(async (verification_check) => {
+        if (verification_check.valid) {
+            if (verification_check.status == 'approved') {
+                let result = null;
+                try {
+                    result = await collection.updateOne({ phone: phone }, { $set: { phone: phone }}, { upsert: true })
+                    res.send(200)
+                } catch (e) {
+                    res.status(502)
+                }
+            }
+            else {
+                res.status(400)
+            }
+        }  
+        else {
+            res.status(400)
+        }   
+    });
+})
+
+app.post('/setup', (req, res) => {
     const { currentLimit, maxLimit, phone, lastCycleDate } = req.body;
     let collection = db.collection("users");
-    let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
- 
-    if (!count) {
-        let newDocument = {
-            phone,
-            currentLimit,
-            maxLimit,
-            lastCycleDate,
-            paymentList: []
-        }
-        newDocument.createdAt = new Date();
-        let result = await collection.insertOne(newDocument);
-        res.send({
-            status: 0,
-            message: 'Phone Number Registered Successfully',
-            result: result
-        }).status(200);
-    }
-    else {
-        res.send({
-            status: 1,
-            message: 'Phone number already exists'
-        }).status(200)
-    }
+
+
 })
+
+// app.post('/setup', async (req, res) => {
+//     const { currentLimit, maxLimit, phone, lastCycleDate } = req.body;
+//     let collection = db.collection("users");
+//     let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
+ 
+//     if (!count) {
+//         let newDocument = {
+//             phone,
+//             currentLimit,
+//             maxLimit,
+//             lastCycleDate,
+//             paymentList: []
+//         }
+//         newDocument.createdAt = new Date();
+//         let result = await collection.insertOne(newDocument);
+//         res.send({
+//             status: 0,
+//             message: 'Phone Number Registered Successfully',
+//             result: result
+//         }).status(200);
+//     }
+//     else {
+//         res.send({
+//             status: 1,
+//             message: 'Phone number already exists'
+//         }).status(200)
+//     }
+// })
 
 app.post('/sms', async (req, res) => {
     const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
@@ -108,7 +169,7 @@ app.post('/sms', async (req, res) => {
     }
 
     client.messages
-      .create({body: message, from: '+15005550006', to: '+1' + req.body.phone })
+      .create({body: message, from: '+18663485547', to: '+1' + req.body.phone })
       .then(message => res.send({
         status: status,
         message: message.body
