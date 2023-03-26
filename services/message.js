@@ -1,5 +1,5 @@
 function getMessage(paymentList, currentLimit, maxLimit) {
-    let currentSum = paymentList.map(e => e.paymentAmount).reduce((a,b) => a + b, 0)
+    let currentSum = paymentList.map(e => parseFloat(e.paymentAmount)).reduce((a,b) => a + b, 0)
     currentSum = parseFloat(currentSum) + parseFloat(currentLimit)
     let rate = (currentSum / maxLimit).toFixed(2)
     let message = ''

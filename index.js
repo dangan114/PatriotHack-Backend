@@ -52,7 +52,7 @@ app.get('/user/:phone', async (req, res) => {
 })
 
 app.post('/setup', async (req, res) => {
-    const { currentLimit, maxLimit, phone, cycleStartDate } = req.body;
+    const { currentLimit, maxLimit, phone, lastCycleDate } = req.body;
     let collection = db.collection("users");
     let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
  
@@ -61,7 +61,7 @@ app.post('/setup', async (req, res) => {
             phone,
             currentLimit,
             maxLimit,
-            cycleStartDate,
+            lastCycleDate,
             paymentList: []
         }
         newDocument.createdAt = new Date();
@@ -81,24 +81,24 @@ app.post('/setup', async (req, res) => {
 })
 
 app.post('/sms', async (req, res) => {
-    const { phone, maxLimit, currentLimit, paymentList, cycleStartDate, createdAt } = req.body;
     const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
-    
-    let { limit, minDate, maxDate } = getDateRange(cycleStartDate, createdAt, currentLimit)
+    let collection = db.collection("users");
+    const query = { phone: req.body.phone }
+
+    let data = await collection.findOne(query)
+    const { maxLimit, currentLimit, lastCycleDate, createdAt } = data
+    const paymentList = req.body.paymentList
+
+    let { limit, minDate, maxDate } = getDateRange(lastCycleDate, createdAt, currentLimit)
     let resultList = paymentList.filter(e => (new Date(e.paymentDate) > minDate && (new Date(e.paymentDate) < maxDate)))
     let { status, message } = getMessage(resultList, limit, maxLimit)
 
-    const query = { phone: phone }
     const updates = {
         $set: { 
             paymentList: paymentList,
             currentLimit: limit
         }
     }
-
-    let collection = db.collection("users");
-   
-    console.log(paymentList)
     
     let result = null;
     try {
@@ -107,9 +107,8 @@ app.post('/sms', async (req, res) => {
         res.status(502)
     }
 
-
     client.messages
-      .create({body: message, from: '+15005550006', to: '+1' + phone })
+      .create({body: message, from: '+15005550006', to: '+1' + req.body.phone })
       .then(message => res.send({
         status: status,
         message: message.body

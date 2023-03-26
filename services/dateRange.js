@@ -5,8 +5,8 @@ function getDateRange(lastCycleDate, createdAt, currentLimit) {
     let limit = (new Date(createdAt)).getMonth() == searchMonth ? currentLimit : 0
     return {
         limit: limit,
-        minDate: (new Date(year, searchMonth, lastCycleDate)),
-        maxDate: (new Date(year, searchMonth + 1, lastCycleDate))
+        minDate: (new Date(year, searchMonth, (new Date(lastCycleDate).getDate()))),
+        maxDate: (new Date(year, searchMonth + 1, (new Date(lastCycleDate).getDate())))
     }
 }
 
