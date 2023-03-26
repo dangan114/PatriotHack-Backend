@@ -13,6 +13,8 @@ if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
 
+const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
+
 app.use(cors())
 
 app.use(express.json())
@@ -66,10 +68,14 @@ app.get('/user/:phone', async (req, res) => {
 // })
 
 app.post('/login', async (req, res) => {
-    const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
+  
     const { phone } = req.body;
+    let serviceId = null
 
-    client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
+    serviceId = (await client.verify.v2.services.create({friendlyName: 'My First Verify Service'})).sid;
+    console.log(serviceId)    
+
+    client.verify.v2.services(serviceId)
     .verifications
     .create({to: '+1' + phone, channel: 'sms'})
     .then(verification => res.send(verification.status).status(200));
@@ -200,20 +206,20 @@ app.post('/sms', async (req, res) => {
     }
 
     client.messages
-      .create({body: message, from: '+18663485547', to: '+1' + req.body.phone })
+      .create({body: message, from: process.env.PHONE_NUMBER, to: '+1' + req.body.phone })
       .then(message => res.send({
         status: status,
         message: message.body
       }).status(200))
 })
 
-app.post('/response', (req, res) => {
-    console.log(req)
-    const MessageResponse = twilio.twiml.MessagingResponse;
-    const twiml = new MessageResponse()
-    twiml.message('The Robots are coming! Head for the hills!');
-    res.type('application/xml').send(twiml.toString());
-})
+// app.post('/response', (req, res) => {
+//     console.log(req)
+//     const MessageResponse = twilio.twiml.MessagingResponse;
+//     const twiml = new MessageResponse()
+//     twiml.message('The Robots are coming! Head for the hills!');
+//     res.type('application/xml').send(twiml.toString());
+// })
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
