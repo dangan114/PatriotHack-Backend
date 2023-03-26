@@ -70,12 +70,9 @@ app.get('/user/:phone', async (req, res) => {
 app.post('/login', async (req, res) => {
   
     const { phone } = req.body;
-    let serviceId = null
+    let serviceId = null   
 
-    serviceId = (await client.verify.v2.services.create({friendlyName: 'My First Verify Service'})).sid;
-    console.log(serviceId)    
-
-    client.verify.v2.services(serviceId)
+    client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
     .verifications
     .create({to: '+1' + phone, channel: 'sms'})
     .then(verification => res.send(verification.status).status(200));
