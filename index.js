@@ -119,7 +119,7 @@ app.post('/verify', async (req, res) => {
 })
 
 app.post('/setup', async (req, res) => {
-    const { currentLimit, creditScore, maxLimit, phone, lastCycleDate } = req.body;
+    const { creditLimit, creditScore, phone, lastCycleDate, creditUtilization } = req.body;
     let collection = db.collection("users");
 
     let result = null;
@@ -127,8 +127,8 @@ app.post('/setup', async (req, res) => {
         result = await collection.updateOne({ phone: phone }, { $set: { 
             phone: phone,
             creditScore: creditScore,
-            currentLimit: currentLimit,
-            maxLimit: maxLimit,
+            creditLimit: creditLimit,
+            creditUtilization: creditUtilization,
             lastCycleDate: lastCycleDate,
             paymentList: [],
             createdAt: new Date(),
@@ -207,10 +207,10 @@ app.post('/sms', async (req, res) => {
 })
 
 app.post('/response', (req, res) => {
+    console.log(req)
     const MessageResponse = twilio.twiml.MessagingResponse;
     const twiml = new MessageResponse()
     twiml.message('The Robots are coming! Head for the hills!');
-
     res.type('text/xml').send(twiml.toString());
 })
 
