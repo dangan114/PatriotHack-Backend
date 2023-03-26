@@ -76,11 +76,11 @@ app.post('/login', async (req, res) => {
 })
 
 app.post('/verify', async (req, res) => {
+    const { phone, code } = req.body
     const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
     const collection = db.collection("users");
     const data = collection.find({ phone: phone })
-    const { phone, code } = req.body
-
+   
     client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
     .verificationChecks
     .create({to: '+1' + phone, code: code })
@@ -90,7 +90,20 @@ app.post('/verify', async (req, res) => {
                 let result = null;
                 try {
                     result = await collection.updateOne({ phone: phone }, { $set: { phone: phone }}, { upsert: true })
-                    res.send(200)
+                    if (data.length > 0) {
+                        res.send({
+                            status: 1,
+                            message: 'Exising data',
+                            payload: data
+                        }).status(200)
+                    }
+                    else {
+                        res.send({
+                            status: 2,
+                            message: 'New data'
+                        }).status(200)
+                    }
+                    
                 } catch (e) {
                     res.status(502)
                 }
@@ -105,11 +118,27 @@ app.post('/verify', async (req, res) => {
     });
 })
 
-app.post('/setup', (req, res) => {
+app.post('/setup', async (req, res) => {
     const { currentLimit, maxLimit, phone, lastCycleDate } = req.body;
     let collection = db.collection("users");
 
-
+    let result = null;
+    try {
+        result = await collection.updateOne({ phone: phone }, { $set: { 
+            phone: phone,
+            currentLimit: currentLimit,
+            maxLimit: maxLimit,
+            lastCycleDate: lastCycleDate,
+            paymentList: [],
+            createdAt: new Date(),
+        }}, { upsert: true })
+        res.send({
+            status: 200,
+            message: 'success'
+        }).status(200)
+    } catch (e) {
+        res.status(502)
+    }
 })
 
 // app.post('/setup', async (req, res) => {
