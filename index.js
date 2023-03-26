@@ -177,12 +177,12 @@ app.post('/sms', async (req, res) => {
     const query = { phone: req.body.phone }
 
     let data = await collection.findOne(query)
-    const { maxLimit, currentLimit, lastCycleDate, createdAt } = data
+    const { creditLimit, creditUtilization, lastCycleDate, createdAt } = data
     const paymentList = req.body.paymentList
 
-    let { limit, minDate, maxDate } = getDateRange(lastCycleDate, createdAt, currentLimit)
+    let { limit, minDate, maxDate } = getDateRange(lastCycleDate, createdAt, creditUtilization)
     let resultList = paymentList.filter(e => (new Date(e.paymentDate) > minDate && (new Date(e.paymentDate) < maxDate)))
-    let { status, message } = getMessage(resultList, limit, maxLimit)
+    let { status, message } = getMessage(resultList, limit, creditLimit)
 
     const updates = {
         $set: { 
@@ -190,6 +190,7 @@ app.post('/sms', async (req, res) => {
             currentLimit: limit
         }
     }
+
     
     let result = null;
     try {
