@@ -6,8 +6,6 @@ import twilio from 'twilio'
 import getMessage from './services/message.js'
 import getDateRange from './services/dateRange.js'
 
-const MessagingResponse = { twilio }
-
 const app = express()
 const port = 3000
 
@@ -208,7 +206,7 @@ app.post('/sms', async (req, res) => {
 })
 
 app.post('/response', (req, res) => {
-    const twiml = new MessagingResponse();
+    const twiml = twilio.twiml.MessagingResponse;
 
     twiml.message('The Robots are coming! Head for the hills!');
 
