@@ -7,23 +7,23 @@ function getMessage(paymentList, currentLimit, maxLimit) {
 
     if (rate < 0.3) {
         status = 5
-        message = '*****You are good*****' 
+        message = 'Credit utilization less than 30%, will not lower credit score. 🙂 You are good 🙂' 
     }
     else if (rate < 0.5) {
         status = 4
-        message = '****You are okay****'
+        message = 'Credit utilization above 30% but below 50%, credit score might lower a bit. 🙂 You are okay 🙂'
     }
     else if (rate < 0.7) {
         status = 3
-        message = '***You are approaching the danger zone***'
+        message = 'Credit utilization above 50%, credit score will most likely lower. 🙁 You are approaching the danger zone 🙁'
     }
     else if (rate < 1) {
         status = 2
-        message = '**You are hiting the limit**'
+        message = 'Almost to max credit utilization, your credit score will lower. 🙁 You are hiting the limit 🙁'
     }
     else {
         status = 1
-        message = '*You are in debt*'
+        message = 'Credit score will lower. 🙁 You are in debt 🙁'
     }
 
     return {

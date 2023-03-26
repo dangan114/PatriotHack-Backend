@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import twilio from 'twilio'
 import getMessage from './services/message.js'
 import getDateRange from './services/dateRange.js'
+import bodyParser from 'body-parser'
 
 const app = express()
 const port = 3000
@@ -144,7 +145,6 @@ app.post('/sms', async (req, res) => {
         }
     }
 
-    
     let result = null;
     try {
         result = await collection.updateOne(query, updates)
@@ -159,14 +159,53 @@ app.post('/sms', async (req, res) => {
         message: message.body
       }).status(200))
 })
+app.use(bodyParser.urlencoded({ extended: false }));
 
-// app.post('/response', (req, res) => {
-//     console.log(req)
-//     const MessageResponse = twilio.twiml.MessagingResponse;
-//     const twiml = new MessageResponse()
-//     twiml.message('The Robots are coming! Head for the hills!');
-//     res.type('application/xml').send(twiml.toString());
-// })
+app.post('/response', async (req, res) => {
+    // Working code, just don't have the verification
+    // const MessageResponse = twilio.twiml.MessagingResponse;
+    // const twiml = new MessageResponse()
+    // twiml.message('The Robots are coming! Head for the hills!');
+    // res.type('application/xml').send(twiml.toString());
+    let collection = db.collection("users");
+    //console.log(req.body.Body)
+
+    const v = req.body.Body.split(':');
+    const phone = v[0];
+    const amount = v[1];
+
+    const data = await collection.findOne({ phone: phone })
+
+    if (data) {
+        let newPayment = {
+            paymentAmount: amount,
+            paymentDate: new Date().toISOString()
+        }
+    
+        data.paymentList.push(newPayment)
+
+        const { creditLimit, creditUtilization, lastCycleDate, createdAt, paymentList } = data
+        console.log(data)
+        let { limit, minDate, maxDate } = getDateRange(lastCycleDate, createdAt, creditUtilization)
+        let resultList = paymentList.filter(e => (new Date(e.paymentDate) > minDate && (new Date(e.paymentDate) < maxDate)))
+        let { status, message } = getMessage(resultList, limit, creditLimit)
+        const result = await collection.updateOne({ phone: phone}, { $set: { paymentList: data.paymentList }})
+        
+        client.messages
+        .create({body: message, from: '+18665253308', to: `+1${phone}`})
+        .then(messageParam => res.send({
+            status: status,
+            message: message
+        }).status(200))
+    }
+    else {
+        client.messages
+        .create({body: "Account does not exit.", from: '+18665253308', to: `+1${phone}`})
+        .then(message => res.send({
+            message: "Account does not exit."
+        }).status(404))
+    }   
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
