@@ -211,7 +211,7 @@ app.post('/response', (req, res) => {
     const MessageResponse = twilio.twiml.MessagingResponse;
     const twiml = new MessageResponse()
     twiml.message('The Robots are coming! Head for the hills!');
-    res.type('text/xml').send(twiml.toString());
+    res.type('application/xml').send(twiml.toString());
 })
 
 app.listen(port, () => {
