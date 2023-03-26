@@ -114,7 +114,6 @@ app.post('/setup', async (req, res) => {
             creditLimit: creditLimit,
             creditUtilization: creditUtilization,
             lastCycleDate: lastCycleDate,
-            paymentList: [],
             createdAt: new Date(),
         }}, { upsert: true })
         res.send({
