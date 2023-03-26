@@ -6,6 +6,8 @@ import twilio from 'twilio'
 import getMessage from './services/message.js'
 import getDateRange from './services/dateRange.js'
 
+const MessagingResponse = { twilio }
+
 const app = express()
 const port = 3000
 
