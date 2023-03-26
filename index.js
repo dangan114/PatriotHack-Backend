@@ -3,6 +3,8 @@ import cors from 'cors'
 import db from './services/db.js'
 import dotenv from 'dotenv'
 import twilio from 'twilio'
+import getMessage from './services/message.js'
+import getDateRange from './services/dateRange.js'
 
 const app = express()
 const port = 3000
@@ -50,16 +52,15 @@ app.get('/user/:phone', async (req, res) => {
 })
 
 app.post('/setup', async (req, res) => {
-    const { current, max, phone, creditUsed, cycleStartDate } = req.body;
+    const { currentLimit, maxLimit, phone, cycleStartDate } = req.body;
     let collection = db.collection("users");
     let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
  
     if (!count) {
         let newDocument = {
             phone,
-            current,
-            max,
-            creditUsed,
+            currentLimit,
+            maxLimit,
             cycleStartDate,
             paymentList: []
         }
@@ -80,28 +81,39 @@ app.post('/setup', async (req, res) => {
 })
 
 app.post('/sms', async (req, res) => {
-    const { phone, message, paymentList } = req.body;
-
-    // const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
-    // console.log(client)
-    // client.messages
-    //     .create({
-    //         from: '+18663483502',
-    //         to: phone,
-    //         body: message
-    //     })
-    //     .then(message => console.log(message))
-    //     .done()
+    const { phone, maxLimit, currentLimit, paymentList, cycleStartDate, createdAt } = req.body;
+    const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
+    
+    let { limit, minDate, maxDate } = getDateRange(cycleStartDate, createdAt, currentLimit)
+    let resultList = paymentList.filter(e => (new Date(e.paymentDate) > minDate && (new Date(e.paymentDate) < maxDate)))
+    let { status, message } = getMessage(resultList, limit, maxLimit)
 
     const query = { phone: phone }
     const updates = {
-        $set: { paymentList: paymentList }
+        $set: { 
+            paymentList: paymentList,
+            currentLimit: limit
+        }
     }
 
     let collection = db.collection("users");
-    let result = await collection.updateOne(query, updates)
+   
+    console.log(paymentList)
+    
+    let result = null;
+    try {
+        result = await collection.updateOne(query, updates)
+    } catch (e) {
+        res.status(502)
+    }
 
-    res.send(result).status(200);
+
+    client.messages
+      .create({body: message, from: '+15005550006', to: '+1' + phone })
+      .then(message => res.send({
+        status: status,
+        message: message.body
+      }).status(200))
 })
 
 app.listen(port, () => {
