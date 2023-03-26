@@ -5,7 +5,6 @@ import dotenv from 'dotenv'
 import twilio from 'twilio'
 import getMessage from './services/message.js'
 import getDateRange from './services/dateRange.js'
-import Twilio from 'twilio/lib/rest/Twilio.js'
 
 const app = express()
 const port = 3000
@@ -120,13 +119,14 @@ app.post('/verify', async (req, res) => {
 })
 
 app.post('/setup', async (req, res) => {
-    const { currentLimit, maxLimit, phone, lastCycleDate } = req.body;
+    const { currentLimit, creditScore, maxLimit, phone, lastCycleDate } = req.body;
     let collection = db.collection("users");
 
     let result = null;
     try {
         result = await collection.updateOne({ phone: phone }, { $set: { 
             phone: phone,
+            creditScore: creditScore,
             currentLimit: currentLimit,
             maxLimit: maxLimit,
             lastCycleDate: lastCycleDate,
