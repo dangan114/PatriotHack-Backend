@@ -16,7 +16,6 @@ if (process.env.NODE_ENV !== 'production') {
 const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
 
 app.use(cors())
-
 app.use(express.json())
 
 app.get('/', (req, res) => {
@@ -49,29 +48,12 @@ app.get('/user/:phone', async (req, res) => {
             status: 0,
             message: 'Result not Found!',
         }).status(200)
-    }
-    
+    } 
 })
-
-// app.get('/test', (req, res) => {
-//     const { phone } = req.body
-//     const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
-
-//     // client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
-//     //             .verifications
-//     //             .create({to: '+1' + phone, channel: 'sms'})
-//     //             .then(verification => console.log(verification.status));
-
-//     // client.verify.v2.services
-//     //             .create({friendlyName: 'My First Verify Service'})
-//     //             .then(service => console.log(service.sid));
-// })
 
 app.post('/login', async (req, res) => {
   
-    const { phone } = req.body;
-    let serviceId = null   
-
+    const { phone } = req.body;  
     client.verify.v2.services(process.env.TWILIO_SERVICE_ID)
     .verifications
     .create({to: '+1' + phone, channel: 'sms'})
@@ -80,7 +62,6 @@ app.post('/login', async (req, res) => {
 
 app.post('/verify', async (req, res) => {
     const { phone, code } = req.body
-    const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
     const collection = db.collection("users");
     const data = collection.find({ phone: phone })
    
@@ -145,37 +126,7 @@ app.post('/setup', async (req, res) => {
     }
 })
 
-// app.post('/setup', async (req, res) => {
-//     const { currentLimit, maxLimit, phone, lastCycleDate } = req.body;
-//     let collection = db.collection("users");
-//     let count = await collection.countDocuments({ phone: phone }, { limit: 1 })
- 
-//     if (!count) {
-//         let newDocument = {
-//             phone,
-//             currentLimit,
-//             maxLimit,
-//             lastCycleDate,
-//             paymentList: []
-//         }
-//         newDocument.createdAt = new Date();
-//         let result = await collection.insertOne(newDocument);
-//         res.send({
-//             status: 0,
-//             message: 'Phone Number Registered Successfully',
-//             result: result
-//         }).status(200);
-//     }
-//     else {
-//         res.send({
-//             status: 1,
-//             message: 'Phone number already exists'
-//         }).status(200)
-//     }
-// })
-
 app.post('/sms', async (req, res) => {
-    const client = twilio(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
     let collection = db.collection("users");
     const query = { phone: req.body.phone }
 
@@ -190,7 +141,7 @@ app.post('/sms', async (req, res) => {
     const updates = {
         $set: { 
             paymentList: paymentList,
-            currentLimit: limit
+            creditUtilization: limit
         }
     }
 
