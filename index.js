@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import twilio from 'twilio'
 import getMessage from './services/message.js'
 import getDateRange from './services/dateRange.js'
+import Twilio from 'twilio/lib/rest/Twilio.js'
 
 const app = express()
 const port = 3000
@@ -206,8 +207,8 @@ app.post('/sms', async (req, res) => {
 })
 
 app.post('/response', (req, res) => {
-    const twiml = twilio.twiml.MessagingResponse;
-
+    const MessageResponse = twilio.twiml.MessagingResponse;
+    const twiml = new MessageResponse()
     twiml.message('The Robots are coming! Head for the hills!');
 
     res.type('text/xml').send(twiml.toString());
